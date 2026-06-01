@@ -4,9 +4,6 @@
 *.pyc
 *.swp
 .DS_Store
-Thumbs.db
-*.tmp
-*.temp
 .atom/
 .build/
 .buildlog/
@@ -14,21 +11,6 @@ Thumbs.db
 .svn/
 .swiftpm/
 migrate_working_dir/
-
-# Secrets and local environment
-.env
-backend/.env
-frontend/.env
-
-# Dependencies
-node_modules/
-backend/node_modules/
-frontend/node_modules/
-
-# Backend build/runtime output
-backend/dist/
-backend-start.log
-backend-start.err
 
 # IntelliJ related
 *.iml
@@ -50,7 +32,6 @@ backend-start.err
 .pub/
 /build/
 /coverage/
-frontend/build/
 
 # Symbolication related
 app.*.symbols
