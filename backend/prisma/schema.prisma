@@ -57,8 +57,28 @@ enum OrderStatus {
   COMPLETED
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum DeliveryStatus {
+  PENDING
+  DISPATCHED
+  DELIVERED
+}
+
+enum TiffinStatus {
+  AVAILABLE
+  DISPATCHED
+  WITH_CUSTOMER
+  RETURNED
+  WASHING
+}
+
 // ─────────────────────────────────────────────
-// MODELS
+// CORE MODELS
 // ─────────────────────────────────────────────
 
 model User {
@@ -81,18 +101,22 @@ model User {
   // Subscriptions as customer
   customerSubscriptions Subscription[] @relation("CustomerSubscriptions")
 
+  // Support Systems
+  tiffinContainers     TiffinContainer[]
+  sustainabilityImpact SustainabilityImpact?
+
   @@map("users")
 }
 
 model CustomerProfile {
-  id                  String   @id @default(cuid())
-  userId              String   @unique
-  defaultAddress      String?
-  dietaryPreferences  String[]
-  allergies           String[]
-  budgetRange         String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  defaultAddress     String?
+  dietaryPreferences String[]
+  allergies          String[]
+  budgetRange        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -114,9 +138,9 @@ model CookProfile {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  meals         Meal[]
-  mealPlans     MealPlan[]
-  cookOrders    Order[]        @relation("CookOrders")
+  meals             Meal[]
+  mealPlans         MealPlan[]
+  cookOrders        Order[]        @relation("CookOrders")
   cookSubscriptions Subscription[] @relation("CookSubscriptions")
 
   @@map("cook_profiles")
@@ -136,26 +160,26 @@ model Meal {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  cook     CookProfile @relation(fields: [cookId], references: [id], onDelete: Cascade)
-  orders   Order[]
+  cook      CookProfile @relation(fields: [cookId], references: [id], onDelete: Cascade)
+  orders    Order[]
   mealPlans MealPlan[]
 
   @@map("meals")
 }
 
 model MealPlan {
-  id          String   @id @default(cuid())
-  cookId      String
-  mealId      String?
-  name        String
-  description String?
+  id           String   @id @default(cuid())
+  cookId       String
+  mealId       String?
+  name         String
+  description  String?
   durationDays Int
-  totalMeals  Int
-  price       Float
-  planType    PlanType @default(FIVE_DAY)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  totalMeals   Int
+  price        Float
+  planType     PlanType @default(FIVE_DAY)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   cook          CookProfile    @relation(fields: [cookId], references: [id], onDelete: Cascade)
   meal          Meal?          @relation(fields: [mealId], references: [id])
@@ -165,21 +189,24 @@ model MealPlan {
 }
 
 model Subscription {
-  id           String             @id @default(cuid())
-  customerId   String
-  cookId       String
-  mealPlanId   String
-  startDate    DateTime
-  endDate      DateTime
-  status       SubscriptionStatus @default(PENDING_PAYMENT)
-  totalPrice   Float
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id         String             @id @default(cuid())
+  customerId String
+  cookId     String
+  mealPlanId String
+  startDate  DateTime
+  endDate    DateTime
+  status     SubscriptionStatus @default(PENDING_PAYMENT)
+  totalPrice Float
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 
   customer User        @relation("CustomerSubscriptions", fields: [customerId], references: [id])
   cook     CookProfile @relation("CookSubscriptions", fields: [cookId], references: [id])
   mealPlan MealPlan    @relation(fields: [mealPlanId], references: [id])
   orders   Order[]
+  
+  // Support System Relation
+  payment  Payment?
 
   @@map("subscriptions")
 }
@@ -202,5 +229,69 @@ model Order {
   cook         CookProfile   @relation("CookOrders", fields: [cookId], references: [id])
   meal         Meal?         @relation(fields: [mealId], references: [id])
 
+  // Support System Relations
+  payment  Payment?
+  delivery Delivery?
+
   @@map("orders")
+}
+
+// ─────────────────────────────────────────────
+// SUPPORT SYSTEM MODELS (MEMBER 4)
+// ─────────────────────────────────────────────
+
+model Payment {
+  id             String        @id @default(cuid())
+  orderId        String?       @unique
+  subscriptionId String?       @unique
+  fiuuTxnId      String?       // Fiuu transaction ID
+  amount         Float
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  order          Order?        @relation(fields: [orderId], references: [id])
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@map("payments")
+}
+
+model Delivery {
+  id          String         @id @default(cuid())
+  orderId     String         @unique
+  riderName   String?        // For Lalamove mock
+  trackingUrl String?
+  status      DeliveryStatus @default(PENDING)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  order       Order          @relation(fields: [orderId], references: [id])
+
+  @@map("deliveries")
+}
+
+model TiffinContainer {
+  id            String       @id @default(cuid())
+  qrCode        String       @unique
+  status        TiffinStatus @default(AVAILABLE)
+  currentCustId String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  customer      User?        @relation(fields: [currentCustId], references: [id])
+
+  @@map("tiffin_containers")
+}
+
+model SustainabilityImpact {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  containersSaved Int      @default(0)
+  carbonOffsetKg  Float    @default(0.0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  customer        User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("sustainability_impacts")
 }

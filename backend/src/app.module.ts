@@ -12,6 +12,10 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { OrdersModule } from './orders/orders.module';
 
 import { ConfigModule } from '@nestjs/config';
+import { PaymentsModule } from './payments/payments.module';
+import { DeliveriesModule } from './deliveries/deliveries.module';
+import { TiffinModule } from './tiffin/tiffin.module';
+import { AiEstimatorModule } from './ai-estimator/ai-estimator.module';
 
 @Module({
   imports: [
@@ -25,6 +29,10 @@ import { ConfigModule } from '@nestjs/config';
     MealPlansModule,
     SubscriptionsModule,
     OrdersModule,
+    PaymentsModule,
+    DeliveriesModule,
+    TiffinModule,
+    AiEstimatorModule,
   ],
   controllers: [AppController],
   providers: [AppService],
