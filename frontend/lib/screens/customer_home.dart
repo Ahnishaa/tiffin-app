@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
+import 'plan_selection_screen.dart';
 
 class CustomerHomeScreen extends StatelessWidget {
   const CustomerHomeScreen({super.key});
@@ -200,6 +201,7 @@ class CustomerHomeScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(), // Passes scroll control to root
               children: [
                 _buildVendorCard(
+                  context: context,
                   name: 'Dapur Kak Siti',
                   subtitle: 'Traditional Malay',
                   rating: '4.8',
@@ -217,6 +219,7 @@ class CustomerHomeScreen extends StatelessWidget {
                   ],
                 ),
                 _buildVendorCard(
+                  context: context,
                   name: 'Ravi\'s Banana Leaf',
                   subtitle: 'Authentic Indian',
                   rating: '4.9',
@@ -234,6 +237,7 @@ class CustomerHomeScreen extends StatelessWidget {
                   ],
                 ),
                 _buildVendorCard(
+                  context: context,
                   name: 'Anson Chinese Cookhouse',
                   subtitle: 'Chinese Home Style',
                   rating: '4.7',
@@ -251,6 +255,7 @@ class CustomerHomeScreen extends StatelessWidget {
                   ],
                 ),
                 _buildVendorCard(
+                  context: context,
                   name: 'The Green Bowl',
                   subtitle: 'Healthy Salads',
                   rating: '4.9',
@@ -268,6 +273,7 @@ class CustomerHomeScreen extends StatelessWidget {
                   ],
                 ),
                 _buildVendorCard(
+                  context: context,
                   name: 'Western Grill Bonda',
                   subtitle: 'Home Cooked Western',
                   rating: '4.6',
@@ -335,6 +341,7 @@ class CustomerHomeScreen extends StatelessWidget {
   }
 
   Widget _buildVendorCard({
+    required BuildContext context,
     required String name,
     required String subtitle,
     required String rating,
@@ -507,7 +514,18 @@ class CustomerHomeScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlanSelectionScreen(
+                                vendorName: name,
+                                planType: 'Weekly Plan',
+                                price: weeklyPrice,
+                              ),
+                            ),
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.textDark,
                           backgroundColor: Colors.white,
@@ -520,7 +538,18 @@ class CustomerHomeScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlanSelectionScreen(
+                                vendorName: name,
+                                planType: 'Monthly Plan',
+                                price: monthlyPrice,
+                              ),
+                            ),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBrand,
                           foregroundColor: Colors.white,
