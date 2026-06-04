@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Param } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 
-class InitiatePaymentDto {
+export class InitiatePaymentDto {
   amount!: number;
   orderId?: string;
   subscriptionId?: string;

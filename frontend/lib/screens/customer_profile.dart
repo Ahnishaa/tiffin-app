@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
+import 'saved_addresses_screen.dart';
+import 'payment_methods_screen.dart';
+import 'order_history_screen.dart';
+import 'help_center_screen.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
-  const CustomerProfileScreen({super.key});
+  final ValueChanged<int>? onSwitchPortal;
+  const CustomerProfileScreen({super.key, this.onSwitchPortal});
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +236,42 @@ class CustomerProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
+            // Portal Switching Section
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 12),
+              child: Text(
+                'Switch Account Mode',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.textMuted,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Container(
+                decoration: AppTheme.containerShadow,
+                child: Column(
+                  children: [
+                    _buildSectionTile(
+                      LucideIcons.chefHat,
+                      'Switch to Chef Center',
+                      onTap: () => onSwitchPortal?.call(3),
+                    ),
+                    Divider(height: 1, indent: 56, color: Colors.grey.shade200),
+                    _buildSectionTile(
+                      LucideIcons.lock,
+                      'Switch to Executive Control',
+                      onTap: () => onSwitchPortal?.call(4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Clean Section Tiles
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -238,13 +279,49 @@ class CustomerProfileScreen extends StatelessWidget {
                 decoration: AppTheme.containerShadow,
                 child: Column(
                   children: [
-                    _buildSectionTile(LucideIcons.creditCard, 'Payment Methods'),
+                    _buildSectionTile(
+                      LucideIcons.creditCard,
+                      'Payment Methods',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PaymentMethodsScreen(),
+                        ),
+                      ),
+                    ),
                     Divider(height: 1, indent: 56, color: Colors.grey.shade200),
-                    _buildSectionTile(LucideIcons.mapPin, 'Saved Addresses'),
+                    _buildSectionTile(
+                      LucideIcons.mapPin,
+                      'Saved Addresses',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SavedAddressesScreen(),
+                        ),
+                      ),
+                    ),
                     Divider(height: 1, indent: 56, color: Colors.grey.shade200),
-                    _buildSectionTile(LucideIcons.history, 'Order History'),
+                    _buildSectionTile(
+                      LucideIcons.history,
+                      'Order History',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OrderHistoryScreen(),
+                        ),
+                      ),
+                    ),
                     Divider(height: 1, indent: 56, color: Colors.grey.shade200),
-                    _buildSectionTile(LucideIcons.helpCircle, 'Help Center'),
+                    _buildSectionTile(
+                      LucideIcons.helpCircle,
+                      'Help Center',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HelpCenterScreen(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -267,7 +344,7 @@ class CustomerProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTile(IconData icon, String title) {
+  Widget _buildSectionTile(IconData icon, String title, {VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: AppTheme.textDark, size: 22),
       title: Text(
@@ -276,7 +353,7 @@ class CustomerProfileScreen extends StatelessWidget {
       ),
       trailing: const Icon(LucideIcons.chevronRight, size: 20, color: AppTheme.textMuted),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

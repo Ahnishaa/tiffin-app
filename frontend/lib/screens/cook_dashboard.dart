@@ -3,7 +3,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
 
 class CookDashboard extends StatelessWidget {
-  const CookDashboard({super.key});
+  final VoidCallback? onBack;
+  const CookDashboard({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +16,13 @@ class CookDashboard extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: AppTheme.textDark),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (onBack != null) {
+              onBack!();
+            } else if (Navigator.of(context).canPop()) {
+              Navigator.pop(context);
+            }
+          },
         ),
         actions: [
           IconButton(

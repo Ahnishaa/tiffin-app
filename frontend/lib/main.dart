@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'screens/auth_screen.dart';
 import 'screens/customer_home.dart';
 import 'screens/delivery_tracker.dart';
@@ -58,14 +59,37 @@ class _MainNavigationState extends State<MainNavigation> {
     _selectedIndex = widget.initialIndex;
   }
 
-  // All your screens live here in a master list
-  final List<Widget> _screens = [
-    const CustomerHomeScreen(),
-    const DeliveryTrackerScreen(),
-    const CustomerProfileScreen(),
-    const CookDashboard(), // Index 3
-    const AdminDashboard(), // Index 4
-  ];
+  void _updateIndex(int index) {
+    if (_selectedIndex != index) {
+      HapticFeedback.mediumImpact();
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
+  Widget _buildActiveScreen() {
+    switch (_selectedIndex) {
+      case 0:
+        return const CustomerHomeScreen();
+      case 1:
+        return const DeliveryTrackerScreen();
+      case 2:
+        return CustomerProfileScreen(
+          onSwitchPortal: (index) => _updateIndex(index),
+        );
+      case 3:
+        return CookDashboard(
+          onBack: () => _updateIndex(2),
+        );
+      case 4:
+        return AdminDashboard(
+          onBack: () => _updateIndex(2),
+        );
+      default:
+        return const CustomerHomeScreen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,26 +101,26 @@ class _MainNavigationState extends State<MainNavigation> {
           child: Scaffold(
             body: Stack(
               children: [
-                _screens[_selectedIndex < 3 ? _selectedIndex : _selectedIndex],
-
-                // FLOATING DEV PANEL (Only for your presentation control)
-                Positioned(
-                  bottom: 80,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildDevButton(Icons.person, 'Cust', 0),
-                        _buildDevButton(Icons.restaurant, 'Chef', 3),
-                        _buildDevButton(Icons.admin_panel_settings, 'Admin', 4),
-                      ],
-                    ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    final fadeTransition = FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                    return ScaleTransition(
+                      scale: Tween<double>(begin: 0.97, end: 1.0).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                      child: fadeTransition,
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<int>(_selectedIndex),
+                    child: _buildActiveScreen(),
                   ),
                 ),
               ],
@@ -109,11 +133,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     unselectedItemColor: Colors.grey,
                     backgroundColor: Colors.white,
                     elevation: 10,
-                    onTap: (index) {
-                      setState(() {
-                        _selectedIndex = index;
-                      });
-                    },
+                    onTap: (index) => _updateIndex(index),
                     items: const [
                       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
                       BottomNavigationBarItem(
@@ -128,40 +148,6 @@ class _MainNavigationState extends State<MainNavigation> {
                   )
                 : null, // Hide customer bottom bar when on Cook/Admin mode
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDevButton(IconData icon, String label, int targetIndex) {
-    bool isActive = _selectedIndex == targetIndex;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = targetIndex;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF00B159) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Outfit',
-              ),
-            ),
-          ],
         ),
       ),
     );

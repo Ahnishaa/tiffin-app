@@ -3,7 +3,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
 
 class AdminDashboard extends StatelessWidget {
-  const AdminDashboard({super.key});
+  final VoidCallback? onBack;
+  const AdminDashboard({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,13 @@ class AdminDashboard extends StatelessWidget {
               title: const Text('Executive Data Control'),
               leading: IconButton(
                 icon: const Icon(LucideIcons.arrowLeft),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (onBack != null) {
+                    onBack!();
+                  } else if (Navigator.of(context).canPop()) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
               actions: [
                 IconButton(icon: const Icon(LucideIcons.search), onPressed: () {}),
