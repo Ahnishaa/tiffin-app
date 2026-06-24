@@ -1,12 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/data_provider.dart';
+import '../models/subscription.dart';
+import '../models/order.dart';
 import '../theme/app_theme.dart';
 
 /// Payment method types — matches what Grab Malaysia uses
-enum PaymentType { card, fpx, tng, grabpay }
+enum PaymentType { card, fpx, tng, grabpay, fiuu }
 
 class PaymentMethodsScreen extends StatefulWidget {
-  const PaymentMethodsScreen({super.key});
+  final String? vendorName;
+  final String? planType;
+  final String? price;
+  final List<String>? selectedDays;
+  final String? selectedTime;
+
+  const PaymentMethodsScreen({
+    super.key,
+    this.vendorName,
+    this.planType,
+    this.price,
+    this.selectedDays,
+    this.selectedTime,
+  });
 
   @override
   State<PaymentMethodsScreen> createState() => _PaymentMethodsScreenState();
@@ -56,6 +74,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _sectionLabel('PAYMENT GATEWAY'),
+            const SizedBox(height: 10),
+            _EWalletTile(
+              type: PaymentType.fiuu,
+              label: 'Fiuu Payment Gateway',
+              subtitle: 'Secure checkout (FPX, Credit Card)',
+              logoWidget: const Icon(LucideIcons.shieldCheck, color: AppTheme.primaryBrand),
+              isSelected: _selected == PaymentType.fiuu,
+              onTap: () => setState(() => _selected = PaymentType.fiuu),
+            ),
+            const SizedBox(height: 24),
+
             // --- E-Wallet Section ---
             _sectionLabel('E-WALLETS'),
             const SizedBox(height: 10),
@@ -128,18 +158,85 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${_paymentLabel(_selected)} set as preferred payment'),
-                      backgroundColor: AppTheme.primaryBrand,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  );
+                onPressed: () async {
+                  if (widget.vendorName != null) {
+                    final authProvider = context.read<AuthProvider>();
+                    final dataProvider = context.read<DataProvider>();
+                    
+                    final uid = authProvider.user?['uid'];
+                    if (uid == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('User not logged in.')),
+                      );
+                      return;
+                    }
+                    
+                    final daysMap = {
+                      'Monday': false,
+                      'Tuesday': false,
+                      'Wednesday': false,
+                      'Thursday': false,
+                      'Friday': false,
+                    };
+                    for (var day in (widget.selectedDays ?? [])) {
+                      daysMap[day] = true;
+                    }
+                    
+                    int meals = widget.planType?.contains('20') == true ? 20 : 5;
+                    
+                    try {
+                      final sub = Subscription(
+                        id: '',
+                        userId: uid,
+                        planType: widget.planType ?? 'Weekly Trial (5 Meals)',
+                        mealsRemaining: meals,
+                        activeDays: daysMap,
+                        deliveryBatch: widget.selectedTime ?? '12:00 PM',
+                        createdAt: DateTime.now(),
+                      );
+                      
+                      final subId = await dataProvider.createSubscription(sub);
+                      
+                      // Generate daily orders
+                      final today = DateTime.now();
+                      int daysAdded = 0;
+                      int offset = 1; // Start tomorrow
+                      
+                      while (daysAdded < meals) {
+                        final deliveryDate = today.add(Duration(days: offset));
+                        // Skip weekends for generation (assuming normal weekdays, but can be improved)
+                        if (deliveryDate.weekday <= 5) {
+                          final newOrder = Order(
+                            id: '',
+                            userId: uid,
+                            mealId: 'auto_generated_$subId',
+                            cookId: 'cook_assigned', // Placeholder
+                            deliveryDate: deliveryDate,
+                            status: 'pending',
+                            tiffinsReturned: 0,
+                          );
+                          await dataProvider.placeOrder(newOrder);
+                          daysAdded++;
+                        }
+                        offset++;
+                      }
+                      
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Subscription & Orders Created Successfully!')),
+                        );
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error processing payment: $e')),
+                        );
+                      }
+                    }
+                  } else {
+                    Navigator.pop(context);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryBrand,
@@ -170,6 +267,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         return 'Touch \'n Go';
       case PaymentType.grabpay:
         return 'GrabPay';
+      case PaymentType.fiuu:
+        return 'Fiuu Payment Gateway';
     }
   }
 

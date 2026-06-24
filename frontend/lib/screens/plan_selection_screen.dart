@@ -181,7 +181,13 @@ class _PlanSelectionScreenState extends State<PlanSelectionScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PaymentMethodsScreen(),
+                            builder: (context) => PaymentMethodsScreen(
+                              vendorName: widget.vendorName,
+                              planType: widget.planType,
+                              price: widget.price,
+                              selectedDays: _selectedDays,
+                              selectedTime: _selectedTime,
+                            ),
                           ),
                         );
                       },

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/data_provider.dart';
 import '../theme/app_theme.dart';
 import 'saved_addresses_screen.dart';
 import 'payment_methods_screen.dart';
 import 'order_history_screen.dart';
 import 'help_center_screen.dart';
+import 'edit_profile_screen.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   final ValueChanged<int>? onSwitchPortal;
@@ -12,6 +16,11 @@ class CustomerProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final dataProvider = context.watch<DataProvider>();
+    final userProfile = authProvider.user;
+    final subscription = dataProvider.subscription;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
       appBar: AppBar(
@@ -58,21 +67,39 @@ class CustomerProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Hannah',
-                    style: TextStyle(
+                  Text(
+                    userProfile?['fullName'] ?? 'User',
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.textDark,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '+60 12-345 6789',
-                    style: TextStyle(
+                  Text(
+                    userProfile?['phone'] ?? 'Add Phone Number',
+                    style: const TextStyle(
                       color: AppTheme.textMuted,
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                      );
+                    },
+                    icon: const Icon(LucideIcons.edit2, size: 16),
+                    label: const Text('Edit Profile'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryBrand,
+                      side: const BorderSide(color: AppTheme.primaryBrand),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ],
@@ -81,107 +108,148 @@ class CustomerProfileScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Active Subscription Overview (Credit Card Style)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.textDark,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    )
-                  ],
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2C2C2C), Color(0xFF1C1C1C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            if (subscription != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.textDark,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2C2C2C), Color(0xFF1C1C1C)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            subscription.planType,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBrand.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Active',
+                              style: TextStyle(
+                                color: AppTheme.primaryBrand,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${subscription.mealsRemaining}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 6.0),
+                            child: Text(
+                              'Meals Left',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => _ManageDeliveryModal(
+                                subscriptionId: subscription.id,
+                                initialActiveDays: subscription.activeDays,
+                                initialBatch: subscription.deliveryBatch,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBrand,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text('Manage Delivery'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Monthly Saver (20 Meals)',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryBrand.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'Active',
-                            style: TextStyle(
-                              color: AppTheme.primaryBrand,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '15',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 6.0),
-                          child: Text(
-                            'Meals Left',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => const _ManageDeliveryModal(),
-                          );
-                        },
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBrand.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.primaryBrand.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(LucideIcons.calendarClock, color: AppTheme.primaryBrand, size: 48),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No Active Plan',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Subscribe to a meal plan to start receiving delicious home-cooked meals.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppTheme.textMuted),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => onSwitchPortal?.call(0),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBrand,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text('Manage Delivery'),
+                        child: const Text('Browse Plans'),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 32),
 
             // Referral Reward Card (Orange)
@@ -329,7 +397,9 @@ class CustomerProfileScreen extends StatelessWidget {
             const SizedBox(height: 40),
             
             TextButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                context.read<AuthProvider>().logout();
+              },
               icon: const Icon(LucideIcons.logOut, color: AppTheme.danger),
               label: const Text(
                 'Log Out',
@@ -359,22 +429,30 @@ class CustomerProfileScreen extends StatelessWidget {
 }
 
 class _ManageDeliveryModal extends StatefulWidget {
-  const _ManageDeliveryModal();
+  final String subscriptionId;
+  final Map<String, bool> initialActiveDays;
+  final String initialBatch;
+
+  const _ManageDeliveryModal({
+    required this.subscriptionId,
+    required this.initialActiveDays,
+    required this.initialBatch,
+  });
 
   @override
   State<_ManageDeliveryModal> createState() => _ManageDeliveryModalState();
 }
 
 class _ManageDeliveryModalState extends State<_ManageDeliveryModal> {
-  final Map<String, bool> _daysSelected = {
-    'Monday': true,
-    'Tuesday': true,
-    'Wednesday': true,
-    'Thursday': true,
-    'Friday': true,
-  };
-  
-  String? _selectedBatch = 'Batch 1 (11:00 AM - 12:00 PM)';
+  late Map<String, bool> _daysSelected;
+  late String? _selectedBatch;
+
+  @override
+  void initState() {
+    super.initState();
+    _daysSelected = Map.from(widget.initialActiveDays);
+    _selectedBatch = widget.initialBatch;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -492,7 +570,16 @@ class _ManageDeliveryModalState extends State<_ManageDeliveryModal> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  if (_selectedBatch != null) {
+                    await context.read<DataProvider>().updateSubscriptionPreferences(
+                          widget.subscriptionId,
+                          _daysSelected,
+                          _selectedBatch!,
+                        );
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                },
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                 child: const Text('Save Preferences'),
               ),

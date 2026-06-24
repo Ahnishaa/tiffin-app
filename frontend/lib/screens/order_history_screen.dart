@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../models/order.dart';
+import '../services/database_service.dart';
+import '../providers/auth_provider.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -12,65 +16,6 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<Map<String, dynamic>> _allOrders = [
-    {
-      'id': '#TF-20240604',
-      'date': 'Today, 12:30 PM',
-      'cook': "Aunty Lim's Kitchen",
-      'cookAvatar': '👩‍🍳',
-      'items': ['Nasi Lemak (x1)', 'Ayam Masak Merah (x1)'],
-      'total': 'RM 14.90',
-      'status': 'Delivered',
-      'rating': 5,
-    },
-    {
-      'id': '#TF-20240603',
-      'date': 'Yesterday, 1:05 PM',
-      'cook': "Chef Rajan's Meals",
-      'cookAvatar': '👨‍🍳',
-      'items': ['Dhal Rice (x1)', 'Rasam Soup (x1)', 'Papadum (x2)'],
-      'total': 'RM 12.50',
-      'status': 'Delivered',
-      'rating': 4,
-    },
-    {
-      'id': '#TF-20240601',
-      'date': '1 Jun, 12:45 PM',
-      'cook': 'Mak Cik Bedah',
-      'cookAvatar': '👵',
-      'items': ['Nasi Campur (x1)', 'Sirap Bandung (x1)'],
-      'total': 'RM 10.00',
-      'status': 'Delivered',
-      'rating': 0,
-    },
-    {
-      'id': '#TF-20240530',
-      'date': '30 May, 11:50 AM',
-      'cook': "Aunty Lim's Kitchen",
-      'cookAvatar': '👩‍🍳',
-      'items': ['Char Kway Teow (x1)'],
-      'total': 'RM 9.90',
-      'status': 'Cancelled',
-      'rating': 0,
-    },
-    {
-      'id': '#TF-20240528',
-      'date': '28 May, 12:15 PM',
-      'cook': "Chef Rajan's Meals",
-      'cookAvatar': '👨‍🍳',
-      'items': ['Chicken Briyani (x1)', 'Raita (x1)'],
-      'total': 'RM 16.00',
-      'status': 'Delivered',
-      'rating': 5,
-    },
-  ];
-
-  List<Map<String, dynamic>> get _delivered =>
-      _allOrders.where((o) => o['status'] == 'Delivered').toList();
-
-  List<Map<String, dynamic>> get _cancelled =>
-      _allOrders.where((o) => o['status'] == 'Cancelled').toList();
 
   @override
   void initState() {
@@ -86,6 +31,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final uid = context.read<AuthProvider>().user?['uid'];
+    
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
       appBar: AppBar(
@@ -109,20 +56,39 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _OrderList(orders: _allOrders),
-          _OrderList(orders: _delivered),
-          _OrderList(orders: _cancelled),
-        ],
-      ),
+      body: uid == null
+          ? const Center(child: Text('User not logged in'))
+          : StreamBuilder<List<Order>>(
+              stream: DatabaseService().getUserOrders(uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                final allOrders = snapshot.data ?? [];
+                
+                // Sort by date descending
+                allOrders.sort((a, b) => b.deliveryDate.compareTo(a.deliveryDate));
+                
+                final delivered = allOrders.where((o) => o.status.toLowerCase() == 'delivered').toList();
+                final cancelled = allOrders.where((o) => o.status.toLowerCase() == 'cancelled').toList();
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _OrderList(orders: allOrders),
+                    _OrderList(orders: delivered),
+                    _OrderList(orders: cancelled),
+                  ],
+                );
+              },
+            ),
     );
   }
 }
 
 class _OrderList extends StatelessWidget {
-  final List<Map<String, dynamic>> orders;
+  final List<Order> orders;
   const _OrderList({required this.orders});
 
   @override
@@ -165,7 +131,7 @@ class _OrderList extends StatelessWidget {
 }
 
 class _OrderCard extends StatefulWidget {
-  final Map<String, dynamic> order;
+  final Order order;
   const _OrderCard({required this.order});
 
   @override
@@ -177,10 +143,10 @@ class _OrderCardState extends State<_OrderCard> {
   int _userRating = 0;
 
   Color _statusColor(String status) {
-    switch (status) {
-      case 'Delivered':
+    switch (status.toLowerCase()) {
+      case 'delivered':
         return const Color(0xFF22C55E);
-      case 'Cancelled':
+      case 'cancelled':
         return AppTheme.danger;
       default:
         return Colors.orange;
@@ -188,22 +154,42 @@ class _OrderCardState extends State<_OrderCard> {
   }
 
   IconData _statusIcon(String status) {
-    switch (status) {
-      case 'Delivered':
+    switch (status.toLowerCase()) {
+      case 'delivered':
         return LucideIcons.checkCircle2;
-      case 'Cancelled':
+      case 'cancelled':
         return LucideIcons.xCircle;
       default:
         return LucideIcons.clock;
     }
   }
 
+  void _cancelOrder() async {
+    try {
+      await DatabaseService().updateOrderStatus(widget.order.id, 'cancelled');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order Cancelled')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
-    final statusColor = _statusColor(order['status'] as String);
-    final bool isDelivered = order['status'] == 'Delivered';
-    final int savedRating = order['rating'] as int;
+    final statusColor = _statusColor(order.status);
+    final bool isDelivered = order.status.toLowerCase() == 'delivered';
+    final bool isPending = order.status.toLowerCase() == 'pending';
+    
+    // Format date simply
+    final dateStr = "${order.deliveryDate.day}/${order.deliveryDate.month}/${order.deliveryDate.year}";
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -238,9 +224,9 @@ class _OrderCardState extends State<_OrderCard> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      order['cookAvatar'] as String,
-                      style: const TextStyle(fontSize: 22),
+                    child: const Text(
+                      '👩‍🍳',
+                      style: TextStyle(fontSize: 22),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -249,16 +235,18 @@ class _OrderCardState extends State<_OrderCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          order['cook'] as String,
+                          'Cook: ${order.cookId}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
                             color: AppTheme.textDark,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          order['date'] as String,
+                          dateStr,
                           style: const TextStyle(
                               fontSize: 12, color: AppTheme.textMuted),
                         ),
@@ -268,23 +256,14 @@ class _OrderCardState extends State<_OrderCard> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        order['total'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: AppTheme.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(_statusIcon(order['status'] as String),
+                          Icon(_statusIcon(order.status),
                               size: 12, color: statusColor),
                           const SizedBox(width: 4),
                           Text(
-                            order['status'] as String,
+                            order.status.toUpperCase(),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
@@ -323,7 +302,7 @@ class _OrderCardState extends State<_OrderCard> {
                           size: 14, color: AppTheme.textMuted),
                       const SizedBox(width: 6),
                       Text(
-                        'Order ${order['id']}',
+                        'Order ID: ${order.id}',
                         style: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.textMuted,
@@ -333,35 +312,8 @@ class _OrderCardState extends State<_OrderCard> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Items list
-                  const Text(
-                    'ITEMS',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.textMuted,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  ...List<String>.from(order['items'] as List).map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3),
-                      child: Row(
-                        children: [
-                          const Icon(LucideIcons.dot,
-                              size: 16, color: AppTheme.textMuted),
-                          Text(item,
-                              style: const TextStyle(
-                                  fontSize: 13, color: AppTheme.textDark)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
                   // Rating section (only for delivered & not yet rated)
-                  if (isDelivered && savedRating == 0) ...[
+                  if (isDelivered) ...[
                     const Text(
                       'RATE THIS MEAL',
                       style: TextStyle(
@@ -394,37 +346,18 @@ class _OrderCardState extends State<_OrderCard> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Already rated badge
-                  if (isDelivered && savedRating > 0) ...[
-                    Row(
-                      children: [
-                        ...List.generate(
-                          savedRating,
-                          (_) => const Icon(Icons.star_rounded,
-                              color: Colors.amber, size: 18),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text('You rated this meal',
-                            style: TextStyle(
-                                fontSize: 12, color: AppTheme.textMuted)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
                   // Action buttons
                   Row(
                     children: [
-                      if (isDelivered)
+                      if (isPending)
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(LucideIcons.refreshCw, size: 15),
-                            label: const Text('Reorder'),
+                            onPressed: _cancelOrder,
+                            icon: const Icon(LucideIcons.x, size: 15),
+                            label: const Text('Cancel Order'),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.primaryBrand,
-                              side: const BorderSide(
-                                  color: AppTheme.primaryBrand),
+                              foregroundColor: AppTheme.danger,
+                              side: const BorderSide(color: AppTheme.danger),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
                               padding:
@@ -432,7 +365,7 @@ class _OrderCardState extends State<_OrderCard> {
                             ),
                           ),
                         ),
-                      if (isDelivered) const SizedBox(width: 10),
+                      if (isPending) const SizedBox(width: 10),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {},
@@ -459,3 +392,4 @@ class _OrderCardState extends State<_OrderCard> {
     );
   }
 }
+

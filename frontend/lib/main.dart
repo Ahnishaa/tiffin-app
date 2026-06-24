@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'firebase_options.dart';
+import 'services/firebase_auth_service.dart';
+import 'providers/auth_provider.dart';
+import 'providers/data_provider.dart';
 import 'screens/auth_screen.dart';
 import 'screens/customer_home.dart';
 import 'screens/delivery_tracker.dart';
@@ -7,8 +14,49 @@ import 'screens/customer_profile.dart';
 import 'screens/cook_dashboard.dart'; // Make sure this file exists!
 import 'screens/admin_dashboard.dart'; // Make sure this file exists!
 
-void main() {
-  runApp(const TiffinApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase initialization failed. Please run 'flutterfire configure'. Error: $e");
+  }
+
+  final authService = FirebaseAuthService();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(
+            authService: authService,
+          ),
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, DataProvider>(
+          create: (_) => DataProvider()..loadMeals(),
+          update: (_, auth, data) {
+            final provider = data ?? DataProvider()..loadMeals();
+            if (auth?.isAuthenticated == true) {
+              final uid = FirebaseAuth.instance.currentUser?.uid;
+              if (uid != null && auth?.user != null) {
+                provider.loadUserSubscription(uid);
+                if (auth!.user!['role'] == 'COOK') {
+                  provider.loadCookOrders(uid);
+                } else {
+                  provider.loadUserOrders(uid);
+                }
+              }
+            }
+            return provider;
+          },
+        ),
+      ],
+      child: const TiffinApp(),
+    ),
+  );
 }
 
 class TiffinApp extends StatelessWidget {

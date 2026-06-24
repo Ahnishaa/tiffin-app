@@ -89,23 +89,40 @@ class CustomerHomeScreen extends StatelessWidget {
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundCanvas,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(LucideIcons.search, color: AppTheme.textMuted, size: 20),
-                    SizedBox(width: 12),
-                    Text(
-                      'Craving home-cooked meals?',
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.backgroundCanvas,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(LucideIcons.search, color: AppTheme.textMuted, size: 20),
+                          SizedBox(width: 12),
+                          Text(
+                            'Craving home-cooked meals?',
+                            style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBrand.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(LucideIcons.slidersHorizontal, color: AppTheme.primaryBrand),
+                      onPressed: () => _showFilterBottomSheet(context),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -565,6 +582,88 @@ class CustomerHomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            bool isHalal = false;
+            bool isPorkFree = false;
+            bool isVegetarian = false;
+
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filter by Dietary',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  CheckboxListTile(
+                    title: const Text('Muslim-Owned / Halal', style: TextStyle(fontWeight: FontWeight.bold)),
+                    value: isHalal,
+                    onChanged: (val) => setState(() => isHalal = val ?? false),
+                    activeColor: AppTheme.primaryBrand,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  CheckboxListTile(
+                    title: const Text('Pork-Free', style: TextStyle(fontWeight: FontWeight.bold)),
+                    value: isPorkFree,
+                    onChanged: (val) => setState(() => isPorkFree = val ?? false),
+                    activeColor: AppTheme.primaryBrand,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  CheckboxListTile(
+                    title: const Text('Vegetarian', style: TextStyle(fontWeight: FontWeight.bold)),
+                    value: isVegetarian,
+                    onChanged: (val) => setState(() => isVegetarian = val ?? false),
+                    activeColor: AppTheme.primaryBrand,
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBrand,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Filters applied!')),
+                        );
+                      },
+                      child: const Text('Apply Filters'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

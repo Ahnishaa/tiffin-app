@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/data_provider.dart';
+import '../models/meal.dart';
 import '../theme/app_theme.dart';
 
 class CookDashboard extends StatelessWidget {
@@ -8,6 +12,18 @@ class CookDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    final dataProvider = context.watch<DataProvider>();
+    final userProfile = authProvider.user;
+    final meals = dataProvider.meals.where((m) => m.cookId == authProvider.user?['uid']).toList();
+    final orders = dataProvider.orders;
+
+    // Calculate wallet balance (fallback to 0.0)
+    final walletBalance = (userProfile?['walletBalance'] ?? 0.0).toDouble();
+
+    // Calculate bulk prep forecast (count orders for today/upcoming)
+    final totalDeliveries = orders.length; // Simplified for now
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundCanvas,
       appBar: AppBar(
@@ -31,7 +47,10 @@ class CookDashboard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => Navigator.of(context).pushReplacementNamed('/'),
+            onTap: () {
+              context.read<AuthProvider>().logout();
+              Navigator.of(context).pushReplacementNamed('/');
+            },
             child: const Icon(LucideIcons.logOut, color: AppTheme.textMuted, size: 20),
           ),
           const SizedBox(width: 16),
@@ -84,9 +103,9 @@ class CookDashboard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'RM 450.00',
-                    style: TextStyle(
+                  Text(
+                    'RM ${walletBalance.toStringAsFixed(2)}',
+                    style: const TextStyle(
                       color: AppTheme.textDark,
                       fontSize: 44,
                       fontWeight: FontWeight.w900,
@@ -146,6 +165,12 @@ class CookDashboard extends StatelessWidget {
                     ),
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(LucideIcons.plusCircle, color: AppTheme.primaryBrand),
+                  onPressed: () {
+                    _showMealDialog(context, null, userProfile?['uid']);
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -158,20 +183,20 @@ class CookDashboard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: AppTheme.containerShadow,
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MenuRowItem(day: 'Mon', meal: 'Nasi Lemak Ayam Goreng Berempah'),
-                  SizedBox(height: 12),
-                  _MenuRowItem(day: 'Tue', meal: 'Rendang Daging with Lemang'),
-                  SizedBox(height: 12),
-                  _MenuRowItem(day: 'Wed', meal: 'Ayam Masak Merah & Rice'),
-                  SizedBox(height: 12),
-                  _MenuRowItem(day: 'Thu', meal: 'Asam Pedas Ikan Pari'),
-                  SizedBox(height: 12),
-                  _MenuRowItem(day: 'Fri', meal: 'Soto Ayam & Begedil'),
-                ],
-              ),
+              child: meals.isEmpty
+                  ? const Text('No meals added yet. Click + to add.', style: TextStyle(color: AppTheme.textMuted))
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: meals.map((meal) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: InkWell(
+                            onTap: () => _showMealDialog(context, meal, userProfile?['uid']),
+                            child: _MenuRowItem(day: meal.dayOfWeek.substring(0, 3), meal: meal.name),
+                          ),
+                        );
+                      }).toList(),
+                    ),
             ),
             const SizedBox(height: 40),
 
@@ -232,21 +257,21 @@ class CookDashboard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Row(
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        '78',
-                        style: TextStyle(
+                        '$totalDeliveries',
+                        style: const TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.w900,
                           color: AppTheme.textDark,
                           letterSpacing: -1,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Text(
+                      const SizedBox(width: 8),
+                      const Text(
                         'Tiffins Scheduled for Delivery',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
                       ),
@@ -260,13 +285,14 @@ class CookDashboard extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark),
                   ),
                   const SizedBox(height: 8),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Nasi Lemak Ayam Goreng Berempah', style: TextStyle(color: AppTheme.textMuted)),
-                      Text('x78', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                    ],
-                  ),
+                  if (meals.isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(meals.first.name, style: const TextStyle(color: AppTheme.textMuted)),
+                        Text('x$totalDeliveries', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -373,6 +399,66 @@ class CookDashboard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showMealDialog(BuildContext context, Meal? meal, String? cookId) {
+    if (cookId == null) return;
+    final nameController = TextEditingController(text: meal?.name);
+    final dayController = TextEditingController(text: meal?.dayOfWeek ?? 'Monday');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(meal == null ? 'Add Meal' : 'Edit Meal'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Meal Name'),
+              ),
+              TextField(
+                controller: dayController,
+                decoration: const InputDecoration(labelText: 'Day of Week'),
+              ),
+            ],
+          ),
+          actions: [
+            if (meal != null)
+              TextButton(
+                onPressed: () {
+                  context.read<DataProvider>().deleteMeal(meal.id);
+                  Navigator.pop(context);
+                },
+                child: const Text('Delete', style: TextStyle(color: AppTheme.danger)),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newMeal = Meal(
+                  id: meal?.id ?? '',
+                  name: nameController.text,
+                  description: meal?.description ?? '',
+                  dayOfWeek: dayController.text,
+                  cookId: cookId,
+                );
+                if (meal == null) {
+                  context.read<DataProvider>().addMeal(newMeal);
+                } else {
+                  context.read<DataProvider>().updateMeal(newMeal);
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

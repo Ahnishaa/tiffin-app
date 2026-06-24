@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -16,9 +18,56 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isCookRegistration = false;
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+  
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
-  void _executeLogin() {
-    Navigator.of(context).pushReplacementNamed('/home');
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _fullNameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _executeLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.login(
+      _emailController.text,
+      _passwordController.text,
+    );
+    if (success && mounted) {
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.error ?? 'Login failed')),
+      );
+    }
+  }
+
+  void _executeRegister() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.register(
+      _fullNameController.text,
+      _emailController.text,
+      _passwordController.text,
+      phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+      role: _isCookRegistration ? 'COOK' : 'CUSTOMER',
+    );
+    if (success && mounted) {
+      if (_isCookRegistration) {
+        Navigator.of(context).pushReplacementNamed('/cook');
+      } else {
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authProvider.error ?? 'Registration failed')),
+      );
+    }
   }
 
   Future<void> _pickProfileImage() async {
@@ -216,26 +265,30 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       key: const ValueKey('login'),
       children: [
-        _buildTextField('Email Address', LucideIcons.mail),
+        _buildTextField('Email Address', LucideIcons.mail, controller: _emailController),
         const SizedBox(height: 16),
-        _buildTextField('Password', LucideIcons.lock, obscureText: true),
+        _buildTextField('Password', LucideIcons.lock, obscureText: true, controller: _passwordController),
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _executeLogin,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00B159), // Grab Green
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          child: Consumer<AuthProvider>(
+            builder: (context, auth, _) => ElevatedButton(
+              onPressed: auth.isLoading ? null : _executeLogin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B159), // Grab Green
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Sign In',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              child: auth.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Sign In',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
             ),
           ),
         ),
@@ -350,11 +403,13 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 24),
         
-        _buildTextField('Full Name', LucideIcons.user),
+        _buildTextField('Full Name', LucideIcons.user, controller: _fullNameController),
         const SizedBox(height: 16),
-        _buildTextField('Email Address', LucideIcons.mail),
+        _buildTextField('Phone Number', LucideIcons.phone, controller: _phoneController),
         const SizedBox(height: 16),
-        _buildTextField('Password', LucideIcons.lock, obscureText: true),
+        _buildTextField('Email Address', LucideIcons.mail, controller: _emailController),
+        const SizedBox(height: 16),
+        _buildTextField('Password', LucideIcons.lock, obscureText: true, controller: _passwordController),
         
         // HOME COOK COMPLIANCE WIZARD
         AnimatedSize(
@@ -394,26 +449,24 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 32),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              if (_isCookRegistration) {
-                Navigator.of(context).pushReplacementNamed('/cook');
-              } else {
-                Navigator.of(context).pushReplacementNamed('/home');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00B159),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+          child: Consumer<AuthProvider>(
+            builder: (context, auth, _) => ElevatedButton(
+              onPressed: auth.isLoading ? null : _executeRegister,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B159),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
               ),
-              elevation: 0,
-            ),
-            child: Text(
-              _isCookRegistration ? 'Apply as Home Cook' : 'Create Account',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              child: auth.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      _isCookRegistration ? 'Apply as Home Cook' : 'Create Account',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
             ),
           ),
         ),
@@ -421,8 +474,9 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, {bool obscureText = false}) {
+  Widget _buildTextField(String label, IconData icon, {bool obscureText = false, TextEditingController? controller}) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
       decoration: InputDecoration(
