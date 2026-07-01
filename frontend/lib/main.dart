@@ -12,6 +12,7 @@ import 'screens/auth_screen.dart';
 import 'screens/customer_home.dart';
 import 'screens/delivery_tracker.dart';
 import 'screens/customer_profile.dart';
+import 'theme/app_theme.dart';
 import 'screens/cook_dashboard.dart'; // Make sure this file exists!
 import 'screens/admin_dashboard.dart'; // Make sure this file exists!
 
@@ -70,7 +71,7 @@ class TiffinApp extends StatelessWidget {
       title: 'Tiffin',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: const Color(0xFF00B159), // Tech Grab Green
+        primaryColor: AppTheme.primaryBrand, // Vibrant Orange
         fontFamily: 'Outfit',
       ),
       // FORCE login screen to be the first thing that opens
@@ -179,7 +180,7 @@ class _MainNavigationState extends State<MainNavigation> {
             bottomNavigationBar: _selectedIndex < 3
                 ? BottomNavigationBar(
                     currentIndex: _selectedIndex,
-                    selectedItemColor: const Color(0xFF00B159),
+                    selectedItemColor: AppTheme.primaryBrand,
                     unselectedItemColor: Colors.grey,
                     backgroundColor: Colors.white,
                     elevation: 10,

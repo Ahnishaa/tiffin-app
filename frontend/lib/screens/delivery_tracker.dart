@@ -179,7 +179,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: Container(
-                height: 250,
+                height: 180,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
@@ -472,7 +472,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
       padding: const EdgeInsets.all(4),
       child: Icon(
         icon,
-        color: isCompletedOrActive ? const Color(0xFF00B159) : Colors.grey.shade300,
+        color: isCompletedOrActive ? AppTheme.primaryBrand : Colors.grey.shade300,
         size: 24,
       ),
     );
@@ -487,7 +487,7 @@ class _DeliveryTrackerScreenState extends State<DeliveryTrackerScreen> {
         height: 4,
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: isFilled ? const Color(0xFF00B159) : Colors.grey.shade300,
+          color: isFilled ? AppTheme.primaryBrand : Colors.grey.shade300,
           borderRadius: BorderRadius.circular(2),
         ),
       ),

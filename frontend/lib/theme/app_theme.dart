@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // GrabFood / Foodpanda Premium Palette
-  static const Color primaryBrand = Color(0xFF00B159); // Tech Grab Green
-  static const Color backgroundCanvas = Color(0xFFFAFAFA); // Ultra-clean #FAFAFA
+  // Vibrant Food Delivery Palette (Orange/Yellow)
+  static const Color primaryBrand = Color(0xFFFF7A00); // Vibrant Orange
+  static const Color backgroundCanvas = Color(0xFFFEF3E6); // Distinct Warm cream
   static const Color white = Colors.white;
   
   // Text Colors

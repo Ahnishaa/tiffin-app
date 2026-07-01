@@ -92,7 +92,7 @@ class _AuthScreenState extends State<AuthScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFF4F9F6), Color(0xFFC2E3D4)],
+                colors: [AppTheme.backgroundCanvas, Color(0xFFFFD1A1)],
               ),
             ),
           ),
@@ -242,7 +242,7 @@ class _AuthScreenState extends State<AuthScreen> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? const Color(0xFF00B159) : Colors.transparent,
+                color: isSelected ? AppTheme.primaryBrand : Colors.transparent,
                 width: 3,
               ),
             ),
@@ -253,7 +253,7 @@ class _AuthScreenState extends State<AuthScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-              color: isSelected ? const Color(0xFF00B159) : AppTheme.textMuted,
+              color: isSelected ? AppTheme.primaryBrand : AppTheme.textMuted,
             ),
           ),
         ),
@@ -275,7 +275,7 @@ class _AuthScreenState extends State<AuthScreen> {
             builder: (context, auth, _) => ElevatedButton(
               onPressed: auth.isLoading ? null : _executeLogin,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00B159), // Grab Green
+                backgroundColor: AppTheme.primaryBrand, // Grab Green
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -330,7 +330,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00B159),
+                      color: AppTheme.primaryBrand,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -369,7 +369,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: !_isCookRegistration ? const Color(0xFF00B159) : AppTheme.textMuted,
+                        color: !_isCookRegistration ? AppTheme.primaryBrand : AppTheme.textMuted,
                       ),
                     ),
                   ),
@@ -392,7 +392,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: _isCookRegistration ? const Color(0xFF00B159) : AppTheme.textMuted,
+                        color: _isCookRegistration ? AppTheme.primaryBrand : AppTheme.textMuted,
                       ),
                     ),
                   ),
@@ -453,7 +453,7 @@ class _AuthScreenState extends State<AuthScreen> {
             builder: (context, auth, _) => ElevatedButton(
               onPressed: auth.isLoading ? null : _executeRegister,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00B159),
+                backgroundColor: AppTheme.primaryBrand,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -495,7 +495,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF00B159), width: 2), // Tech Grab Green active shift
+          borderSide: const BorderSide(color: AppTheme.primaryBrand, width: 2), // Tech Grab Green active shift
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       ),
