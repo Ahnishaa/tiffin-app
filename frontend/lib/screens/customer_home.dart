@@ -3,8 +3,80 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
 import 'plan_selection_screen.dart';
 
-class CustomerHomeScreen extends StatelessWidget {
+class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
+
+  @override
+  State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
+}
+
+class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
+  bool _isHalal = false;
+  bool _isPorkFree = false;
+  bool _isVegetarian = false;
+
+  final List<Map<String, dynamic>> _allVendors = [
+    {
+      'name': 'Dapur Kak Siti',
+      'subtitle': 'Traditional Malay',
+      'rating': '4.8',
+      'distance': '1.2 km',
+      'tag': 'Muslim-Owned / Halal',
+      'filterTags': ['Halal'],
+      'imageUrl': 'https://images.unsplash.com/photo-1596797038530-2c107229654b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      'weeklyPrice': 'RM 45',
+      'monthlyPrice': 'RM 150',
+      'menus': ['Mon: Nasi Lemak', 'Tue: Rendang Daging', 'Wed: Ayam Merah', 'Thu: Asam Pedas', 'Fri: Soto'],
+    },
+    {
+      'name': "Ravi's Banana Leaf",
+      'subtitle': 'Authentic Indian',
+      'rating': '4.9',
+      'distance': '2.5 km',
+      'tag': 'Vegetarian Options',
+      'filterTags': ['Vegetarian'],
+      'imageUrl': 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      'weeklyPrice': 'RM 50',
+      'monthlyPrice': 'RM 165',
+      'menus': ['Mon: Veggie Kurma', 'Tue: Dalca', 'Wed: Paneer Masala', 'Thu: Gobi Kashmiri', 'Fri: Sambar'],
+    },
+    {
+      'name': 'Anson Chinese Cookhouse',
+      'subtitle': 'Chinese Home Style',
+      'rating': '4.7',
+      'distance': '3.1 km',
+      'tag': 'Pork-Free',
+      'filterTags': ['Pork-Free'],
+      'imageUrl': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      'weeklyPrice': 'RM 60',
+      'monthlyPrice': 'RM 190',
+      'menus': ['Mon: Hainanese Chicken Rice', 'Tue: Sweet & Sour Fish', 'Wed: Mapo Tofu', 'Thu: Lemon Chicken', 'Fri: Hokkien Mee (No Lard)'],
+    },
+    {
+      'name': 'The Green Bowl',
+      'subtitle': 'Healthy Salads',
+      'rating': '4.9',
+      'distance': '1.8 km',
+      'tag': 'Vegetarian & Pork-Free',
+      'filterTags': ['Vegetarian', 'Pork-Free'],
+      'imageUrl': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+      'weeklyPrice': 'RM 65',
+      'monthlyPrice': 'RM 210',
+      'menus': ['Mon: Quinoa Salad', 'Tue: Grilled Tofu Wrap', 'Wed: Vegan Lasagna', 'Thu: Harvest Buddha Bowl', 'Fri: Tempeh Stir-fry'],
+    },
+    {
+      'name': 'Western Grill Bonda',
+      'subtitle': 'Home Cooked Western',
+      'rating': '4.6',
+      'distance': '4.0 km',
+      'tag': 'Muslim-Owned / Halal',
+      'filterTags': ['Halal'],
+      'imageUrl': 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+      'weeklyPrice': 'RM 55',
+      'monthlyPrice': 'RM 180',
+      'menus': ['Mon: Grilled Chicken Chop', 'Tue: Spaghetti Carbonara', 'Wed: Black Pepper Beef', 'Thu: Mushroom Soup & Garlic Bread', 'Fri: Fish and Chips'],
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -212,102 +284,48 @@ class CustomerHomeScreen extends StatelessWidget {
               ),
             ),
             
-            // Native ListView.builder inside SingleChildScrollView
-            ListView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(), // Passes scroll control to root
-              children: [
-                _buildVendorCard(
-                  context: context,
-                  name: 'Dapur Kak Siti',
-                  subtitle: 'Traditional Malay',
-                  rating: '4.8',
-                  distance: '1.2 km',
-                  tag: 'Muslim-Owned',
-                  imageUrl: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  weeklyPrice: 'RM 45',
-                  monthlyPrice: 'RM 150',
-                  menus: [
-                    'Mon: Nasi Lemak',
-                    'Tue: Rendang Daging',
-                    'Wed: Ayam Merah',
-                    'Thu: Asam Pedas',
-                    'Fri: Soto',
-                  ],
-                ),
-                _buildVendorCard(
-                  context: context,
-                  name: 'Ravi\'s Banana Leaf',
-                  subtitle: 'Authentic Indian',
-                  rating: '4.9',
-                  distance: '2.5 km',
-                  tag: 'Vegetarian Options',
-                  imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  weeklyPrice: 'RM 50',
-                  monthlyPrice: 'RM 165',
-                  menus: [
-                    'Mon: Veggie Kurma',
-                    'Tue: Dalca',
-                    'Wed: Paneer Masala',
-                    'Thu: Gobi Kashmiri',
-                    'Fri: Sambar',
-                  ],
-                ),
-                _buildVendorCard(
-                  context: context,
-                  name: 'Anson Chinese Cookhouse',
-                  subtitle: 'Chinese Home Style',
-                  rating: '4.7',
-                  distance: '3.1 km',
-                  tag: 'Pork-Free',
-                  imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  weeklyPrice: 'RM 60',
-                  monthlyPrice: 'RM 190',
-                  menus: [
-                    'Mon: Hainanese Chicken Rice',
-                    'Tue: Sweet & Sour Fish',
-                    'Wed: Mapo Tofu',
-                    'Thu: Lemon Chicken',
-                    'Fri: Hokkien Mee (No Lard)',
-                  ],
-                ),
-                _buildVendorCard(
-                  context: context,
-                  name: 'The Green Bowl',
-                  subtitle: 'Healthy Salads',
-                  rating: '4.9',
-                  distance: '1.8 km',
-                  tag: 'KKM Certified',
-                  imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-                  weeklyPrice: 'RM 65',
-                  monthlyPrice: 'RM 210',
-                  menus: [
-                    'Mon: Quinoa Salad',
-                    'Tue: Grilled Tofu Wrap',
-                    'Wed: Vegan Lasagna',
-                    'Thu: Harvest Buddha Bowl',
-                    'Fri: Tempeh Stir-fry',
-                  ],
-                ),
-                _buildVendorCard(
-                  context: context,
-                  name: 'Western Grill Bonda',
-                  subtitle: 'Home Cooked Western',
-                  rating: '4.6',
-                  distance: '4.0 km',
-                  tag: 'Muslim-Owned',
-                  imageUrl: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
-                  weeklyPrice: 'RM 55',
-                  monthlyPrice: 'RM 180',
-                  menus: [
-                    'Mon: Grilled Chicken Chop',
-                    'Tue: Spaghetti Carbonara',
-                    'Wed: Black Pepper Beef',
-                    'Thu: Mushroom Soup & Garlic Bread',
-                    'Fri: Fish and Chips',
-                  ],
-                ),
-              ],
+            // Dynamic ListView based on filtered data
+            Builder(
+              builder: (context) {
+                // Apply strict AND logic filtering
+                List<Map<String, dynamic>> filtered = _allVendors.where((v) {
+                  List<String> tags = List<String>.from(v['filterTags']);
+                  if (_isHalal && !tags.contains('Halal')) return false;
+                  if (_isPorkFree && !tags.contains('Pork-Free')) return false;
+                  if (_isVegetarian && !tags.contains('Vegetarian')) return false;
+                  return true;
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(40.0),
+                    child: Center(
+                      child: Text('No chefs match all your selected filters.', style: TextStyle(color: AppTheme.textMuted)),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final vendor = filtered[index];
+                    return _buildVendorCard(
+                      context: context,
+                      name: vendor['name'],
+                      subtitle: vendor['subtitle'],
+                      rating: vendor['rating'],
+                      distance: vendor['distance'],
+                      tag: vendor['tag'],
+                      imageUrl: vendor['imageUrl'],
+                      weeklyPrice: vendor['weeklyPrice'],
+                      monthlyPrice: vendor['monthlyPrice'],
+                      menus: List<String>.from(vendor['menus']),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),
@@ -592,11 +610,7 @@ class CustomerHomeScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            bool isHalal = false;
-            bool isPorkFree = false;
-            bool isVegetarian = false;
-
+          builder: (context, setModalState) {
             return Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
@@ -618,24 +632,33 @@ class CustomerHomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   CheckboxListTile(
                     title: const Text('Muslim-Owned / Halal', style: TextStyle(fontWeight: FontWeight.bold)),
-                    value: isHalal,
-                    onChanged: (val) => setState(() => isHalal = val ?? false),
+                    value: _isHalal,
+                    onChanged: (val) {
+                      setModalState(() => _isHalal = val ?? false);
+                      this.setState(() {}); // Update main UI instantly
+                    },
                     activeColor: AppTheme.primaryBrand,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
                   CheckboxListTile(
                     title: const Text('Pork-Free', style: TextStyle(fontWeight: FontWeight.bold)),
-                    value: isPorkFree,
-                    onChanged: (val) => setState(() => isPorkFree = val ?? false),
+                    value: _isPorkFree,
+                    onChanged: (val) {
+                      setModalState(() => _isPorkFree = val ?? false);
+                      this.setState(() {});
+                    },
                     activeColor: AppTheme.primaryBrand,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
                   CheckboxListTile(
                     title: const Text('Vegetarian', style: TextStyle(fontWeight: FontWeight.bold)),
-                    value: isVegetarian,
-                    onChanged: (val) => setState(() => isVegetarian = val ?? false),
+                    value: _isVegetarian,
+                    onChanged: (val) {
+                      setModalState(() => _isVegetarian = val ?? false);
+                      this.setState(() {});
+                    },
                     activeColor: AppTheme.primaryBrand,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
